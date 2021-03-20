@@ -15,6 +15,7 @@ userRouter.use(urlencodedParser);
 
 let email;
 let name;
+let role;
 
 function verifyToken(req, res, next) {
     if (!req.headers.authorization) {
@@ -31,7 +32,7 @@ function verifyToken(req, res, next) {
         return res.status(401).send('Unauthorized request')
     }
     email = payload.subject.split(' ')[0]
-    let role = payload.subject.split(' ')[1]
+    role = payload.subject.split(' ')[1]
     name = payload.subject.split(' ')[2]
     console.log("email" + email)
     console.log("role" + role)
@@ -87,26 +88,66 @@ userRouter.put('/update/:id', verifyToken, function (req, res) {
         article_category: req.body.article_category
     }
     console.log(email);
-    ArticleData.findOneAndUpdate({
-        $and: [
-            { _id: id },
-            { $or: [{ article_author : name }, { user_role: "admin" }] }
-        ]
-    }, item, { new: true }, (err, doc) => {
-        if (!err) {
-            if (!doc) {
-                return res.status(401).send('Unauthorized request')
+    if(role=="admin"){
+        ArticleData.findOneAndUpdate({ _id: id }, item, { new: true }, (err, doc) => {
+            if (!err) {
+                if (!doc) {
+                    return res.status(401).send('Unauthorized request')
+                }
+                else {
+                    console.log(doc);
+                    res.send(doc);
+                }
             }
+    
             else {
-                console.log(doc);
-                res.send(doc);
+                console.log(err);
             }
-        }
+        })
+    }
+    else{        
+        ArticleData.findOneAndUpdate({
+            $and: [
+                { _id: id },
+                { article_author : name }
+            ]
+        }, item, { new: true }, (err, doc) => {
+            if (!err) {
+                if (!doc) {
+                    return res.status(401).send('Unauthorized request')
+                }
+                else {
+                    console.log(doc);
+                    res.send(doc);
+                }
+            }
+    
+            else {
+                console.log(err);
+            }
+        })
+    }
 
-        else {
-            console.log(err);
-        }
-    })
+    // ArticleData.findOneAndUpdate({
+    //     $and: [
+    //         { _id: id },
+    //         { $or: [{ article_author : name }, { user_role: "admin" }] }
+    //     ]
+    // }, item, { new: true }, (err, doc) => {
+    //     if (!err) {
+    //         if (!doc) {
+    //             return res.status(401).send('Unauthorized request')
+    //         }
+    //         else {
+    //             console.log(doc);
+    //             res.send(doc);
+    //         }
+    //     }
+
+    //     else {
+    //         console.log(err);
+    //     }
+    // })
 });
 
 //authenticated user to delete his article
